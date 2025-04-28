@@ -1,11 +1,12 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://app.sangchu.xyz/api';
 
 // Axios 인스턴스 생성
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
+  timeout: 10000, // 10초 타임아웃 설정
   headers: {
     'Content-Type': 'application/json',
   }
@@ -32,10 +33,40 @@ api.interceptors.response.use(
     }
     return response;
   },
-  error => {
+  async error => {
+    const originalRequest = error.config;
+    
+    // 타임아웃 에러인 경우 재시도
+    if (error.code === 'ECONNABORTED' && !originalRequest._retry) {
+      originalRequest._retry = true;
+      return api(originalRequest);
+    }
+
+    // 네트워크 에러 처리
+    if (!error.response) {
+      console.error('네트워크 에러:', error.message);
+      throw new Error('서버와의 연결이 불안정합니다. 잠시 후 다시 시도해주세요.');
+    }
+
+    // 기타 에러 처리
     console.error('API 에러:', error);
     return Promise.reject(error);
   }
 );
+
+// 중복성 검사 API
+export const checkStoreNameDuplicate = async (storeName) => {
+  try {
+    const response = await api.get(`/patent`, {
+      params: {
+        storeNm: storeName
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('중복성 검사 에러:', error);
+    throw error;
+  }
+};
 
 export default api;

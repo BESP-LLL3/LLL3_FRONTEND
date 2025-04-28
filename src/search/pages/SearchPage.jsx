@@ -10,6 +10,7 @@ import NameSuggestionList from '../components/NameSuggestionList';
 import NameResultPopup from '../components/NameResultPopup';
 import Loader from '../components/Loader';
 import Card from '../components/Card';
+import StoreNameDuplicateCheck from '../components/StoreNameDuplicateCheck';
 
 const SearchPage = () => {
   const [keyword, setKeyword] = useState('');
@@ -251,15 +252,21 @@ const SearchPage = () => {
               style={styles.nameSuggestionSection}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
             >
-              <h2 style={styles.sectionTitle}>추천 상호명</h2>
-              <NameSuggestionList 
-                suggestions={nameSuggestions} 
-                onSelect={handleNameSelect} 
-              />
+              <Card>
+                <NameSuggestionList 
+                  suggestions={nameSuggestions}
+                  onSelect={handleNameSelect}
+                />
+              </Card>
             </motion.div>
           )}
+
+          <StoreNameDuplicateCheck 
+            isVisible={showResults}
+          />
         </div>
       )}
 

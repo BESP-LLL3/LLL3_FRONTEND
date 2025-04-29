@@ -122,8 +122,18 @@ const StoreNameDuplicateCheck = ({ isVisible }) => {
   const [isDuplicate, setIsDuplicate] = useState(null);
   const [error, setError] = useState(null);
   const [showThunderEffect, setShowThunderEffect] = useState(false);
+  const [lastCheckedAt, setLastCheckedAt] = useState(0);
+  const [cooldownMsg, setCooldownMsg] = useState('');
 
   const handleCheck = async () => {
+    const now = Date.now();
+    if (now - lastCheckedAt < 3000) {
+      setCooldownMsg('3초 후 다시 시도하세요.');
+      setTimeout(() => setCooldownMsg(''), 1500);
+      return;
+    }
+    setLastCheckedAt(now);
+
     if (!storeName.trim()) {
       setError('가게 이름을 입력해주세요.');
       return;
@@ -256,6 +266,10 @@ const StoreNameDuplicateCheck = ({ isVisible }) => {
                 {error}
               </div>
             )}
+
+            <div style={{ textAlign: 'center', minHeight: 24, color: '#C62828', fontSize: '1rem', fontWeight: 500 }}>
+              {cooldownMsg}
+            </div>
           </div>
         </Card>
       </motion.div>

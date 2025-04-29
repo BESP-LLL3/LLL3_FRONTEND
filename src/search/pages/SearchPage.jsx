@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import SearchBar from '../components/SearchBar';
 import ExpandedSearchBar from '../components/ExpandedSearchBar';
 import TrendChart from '../../trend/components/KeywordTrendChart';
-import { getTrendData } from '../../trend/api/keywordApi';
+import { getTrendData, getBrandSuggestions } from '../../trend/api/keywordApi';
 import D3WordCloud from '../components/D3WordCloud';
 import BigWordCloud from '../components/BigWordCloud';
 import NameSuggestionList from '../components/NameSuggestionList';
@@ -26,38 +26,6 @@ const SearchPage = () => {
   const [popupName, setPopupName] = useState('');
   const [showDetailView, setShowDetailView] = useState(false);
 
-  const generateNameSuggestions = useCallback((keywords) => {
-    if (!keywords || keywords.length === 0) {
-      setNameSuggestions([]);
-      return;
-    }
-
-    const topKeywords = [...keywords]
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 5)
-      .map(k => k.text);
-
-    const suggestions = [];
-    if (topKeywords.length === 0) {
-        setNameSuggestions([]);
-        return;
-    }
-
-    const baseKeyword = topKeywords[0]; 
-
-    topKeywords.slice(1).forEach(word => {
-        suggestions.push(`${baseKeyword} ${word}`);
-        suggestions.push(`${word} ${baseKeyword}`);
-    });
-
-    const suffixes = ['홍대', '톡톡', '두마리', '공작소', '집'];
-    suffixes.forEach(suffix => {
-        suggestions.push(`${baseKeyword} ${suffix}`);
-    });
-
-    setNameSuggestions([...new Set(suggestions)].slice(0, 8));
-  }, []);
-
   const handleSearch = async (searchData) => {
     if (searchData) {
       setKeyword(searchData.keyword);
@@ -69,19 +37,27 @@ const SearchPage = () => {
       
       try {
         setLoading(true);
-        const response = await getTrendData(searchData.keyword);
-        setTrendData(response);
         
-        // 워드 클라우드용 데이터 포맷팅
-        const formattedKeywords = response.payload.map(k => ({
-          text: k.keyword,
-          value: k.recentCrtrYmRelevance
-        }));
-        generateNameSuggestions(formattedKeywords);
+        // 1. 트렌드 데이터 조회
+        const trendResponse = await getTrendData(searchData.keyword);
+        setTrendData(trendResponse);
+        
+        // 2. 브랜드 이름 추천 API 호출
+        const trendKeywords = trendResponse.payload.map(item => item.keyword);
+        const brandResponse = await getBrandSuggestions(
+          searchData.keyword,
+          trendKeywords,
+          searchData.recommendKeyword
+        );
+        
+        if (brandResponse.success && brandResponse.payload) {
+          setNameSuggestions(brandResponse.payload);
+        }
+        
         setShowResults(true);
       } catch (err) {
-        console.error('키워드 데이터 로딩 실패:', err);
-        setError('키워드 데이터를 불러오는데 실패했습니다.');
+        console.error('데이터 로딩 실패:', err);
+        setError('데이터를 불러오는데 실패했습니다.');
         setTrendData(null);
         setNameSuggestions([]);
       } finally {

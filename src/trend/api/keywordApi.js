@@ -31,7 +31,22 @@ export const getTrendData = async (keyword) => {
     });
     return response.data;
   } catch (error) {
-    console.error('트렌드 데이터 API 호출 실패:', error);
+    console.error('트렌드 데이터 조회 실패:', error);
+    throw error;
+  }
+};
+
+export const getBrandSuggestions = async (searchWord, trendKeywords, additionalKeyword) => {
+  try {
+    const response = await api.post('/brand', {
+      searchWord,
+      trendKeywords,
+      additionalKeyword,
+      limit: 30
+    });
+    return response.data;
+  } catch (error) {
+    console.error('브랜드 이름 추천 실패:', error);
     throw error;
   }
 };

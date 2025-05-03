@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchBar from '../components/SearchBar';
 import ExpandedSearchBar from '../components/ExpandedSearchBar';
@@ -25,11 +25,26 @@ const SearchPage = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [popupName, setPopupName] = useState('');
   const [showDetailView, setShowDetailView] = useState(false);
+  const resultsSectionRef = useRef(null);
+
+  const scrollToResults = () => {
+    if (resultsSectionRef.current) {
+      resultsSectionRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
 
   const handleSearch = async (searchData) => {
     if (searchData) {
       setKeyword(searchData.keyword);
       setRecommendKeyword(searchData.recommendKeyword);
+      
+      // localStorage에 검색어 저장
+      localStorage.setItem('searchKeyword', searchData.keyword);
+      localStorage.setItem('searchCustom', searchData.recommendKeyword);
+      
       setSelectedKeyword('');
       setNameSuggestions([]);
       setShowResults(false);
@@ -55,6 +70,8 @@ const SearchPage = () => {
         }
         
         setShowResults(true);
+        // 검색 결과가 표시된 후 스크롤
+        setTimeout(scrollToResults, 100);
       } catch (err) {
         console.error('데이터 로딩 실패:', err);
         setError('데이터를 불러오는데 실패했습니다.');
@@ -143,7 +160,11 @@ const SearchPage = () => {
       </div>
       
       {showResults && (
-        <div id="results-section" style={styles.resultsSection}>
+        <div 
+          id="results-section" 
+          style={styles.resultsSection}
+          ref={resultsSectionRef}
+        >
           <AnimatePresence mode="wait">
             {!showDetailView ? (
               <motion.div
@@ -231,17 +252,19 @@ const SearchPage = () => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5 }}
             >
-              <Card>
-                <NameSuggestionList 
-                  suggestions={nameSuggestions}
-                  onSelect={handleNameSelect}
-                />
-              </Card>
+              <NameSuggestionList 
+                suggestions={nameSuggestions}
+                onSelect={handleNameSelect}
+                keyword={keyword}
+                custom={recommendKeyword}
+              />
             </motion.div>
           )}
 
           <StoreNameDuplicateCheck 
             isVisible={showResults}
+            keyword={keyword}
+            custom={recommendKeyword}
           />
         </div>
       )}

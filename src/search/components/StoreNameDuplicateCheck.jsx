@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaCheck, FaTimes } from 'react-icons/fa';
 import confetti from 'canvas-confetti';
 import Card from './Card';
+import api from '../../app/api/api';
 import searchIcon from '../assets/images/search-icon.png';
 
 // 검은 줄 우울 이펙트 오버레이 컴포넌트
@@ -143,13 +144,19 @@ const StoreNameDuplicateCheck = ({ isVisible }) => {
     setError(null);
     
     try {
-      const response = await fetch(`/api/patent?storeNm=${encodeURIComponent(storeName)}`);
-      const result = await response.json();
-      console.log('중복성 검사 API 응답:', {
-        storeName,
-        response: result,
-        isDuplicate: result
+      // localStorage에서 검색어 가져오기
+      const keyword = localStorage.getItem('searchKeyword') || '';
+      const custom = localStorage.getItem('searchCustom') || '';
+
+      const response = await api.get('/patent', {
+        params: {
+          keyword,
+          custom,
+          "storeNm": storeName
+        }
       });
+
+      const result = await response.data;
 
       const isDuplicateValue = result.payload;
       setIsDuplicate(isDuplicateValue);
@@ -183,7 +190,7 @@ const StoreNameDuplicateCheck = ({ isVisible }) => {
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.5 }}
       >
-        <Card>
+        <div>
           <div style={{ padding: '32px 24px 24px 24px' }}>
             <div style={{ textAlign: 'center', fontWeight: 700, color: '#357552', fontSize: '1.5rem', marginBottom: '18px', letterSpacing: '-1px' }}>
               상호명 중복 검사
@@ -271,7 +278,7 @@ const StoreNameDuplicateCheck = ({ isVisible }) => {
               {cooldownMsg}
             </div>
           </div>
-        </Card>
+        </div>
       </motion.div>
     </>
   );

@@ -5,8 +5,8 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://app.sangchu.
 // Axios 인스턴스 생성
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
-  timeout: 10000, // 10초 타임아웃 설정
+  withCredentials: false,
+  timeout: 99999999999, // 120초 타임아웃 설정
   headers: {
     'Content-Type': 'application/json',
   }
@@ -55,10 +55,12 @@ api.interceptors.response.use(
 );
 
 // 중복성 검사 API
-export const checkStoreNameDuplicate = async (storeName) => {
+export const checkStoreNameDuplicate = async (keyword, custom = '', storeName) => {
   try {
     const response = await api.get(`/patent`, {
       params: {
+        keyword,
+        custom,
         storeNm: storeName
       }
     });

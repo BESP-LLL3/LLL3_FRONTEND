@@ -42,7 +42,7 @@ export const getBrandSuggestions = async (searchWord, trendKeywords, additionalK
       searchWord,
       trendKeywords,
       additionalKeyword,
-      limit: 30
+      limit: 10
     });
     return response.data;
   } catch (error) {
